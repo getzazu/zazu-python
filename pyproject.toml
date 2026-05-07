@@ -1,0 +1,91 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "zazu-sdk"
+description = "Python SDK for the Zazu API."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+authors = [{ name = "Zazu", email = "engineering@zazu.ma" }]
+keywords = ["zazu", "sdk", "api", "fintech", "morocco"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Typing :: Typed",
+]
+dynamic = ["version"]
+dependencies = ["httpx>=0.27"]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8",
+  "pytest-vcr>=1.0.2",
+  "vcrpy>=6",
+  "ruff>=0.7",
+  "mypy>=1.11",
+]
+
+[project.urls]
+Homepage = "https://github.com/getzazu/zazu-python"
+Documentation = "https://github.com/getzazu/zazu-python#readme"
+Repository = "https://github.com/getzazu/zazu-python"
+Issues = "https://github.com/getzazu/zazu-python/issues"
+Changelog = "https://github.com/getzazu/zazu-python/blob/main/CHANGELOG.md"
+
+[tool.hatch.version]
+path = "src/zazu_sdk/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/zazu_sdk"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/zazu_sdk", "README.md", "CHANGELOG.md", "LICENSE"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+filterwarnings = ["error"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+  "E", "F", "W",   # pycodestyle / pyflakes
+  "I",             # isort
+  "B",             # bugbear
+  "UP",            # pyupgrade
+  "PL",            # pylint subset
+  "RUF",           # ruff-specific
+  "SIM",           # simplify
+  "TCH",           # type-checking imports
+]
+ignore = [
+  "PLR0913",  # too many args — SDK methods accept many kwargs by design
+  "PLR0911",  # too many returns — error-status dispatch is naturally a switch
+  "PLR2004",  # magic-value comparison — fine for HTTP status codes
+  "TC001",    # move application imports under TYPE_CHECKING — many are used at runtime
+  "TC002",    # move third-party imports under TYPE_CHECKING — same reason
+  "TC003",    # move stdlib imports under TYPE_CHECKING — same reason
+  "UP037",    # remove quotes from annotations — needed for `Self`-style forward refs
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["PLR2004"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["src/zazu_sdk"]

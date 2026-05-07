@@ -1,0 +1,121 @@
+"""Client wiring + error mapping."""
+
+from __future__ import annotations
+
+import httpx
+import pytest
+
+from zazu_sdk import (
+    Zazu,
+    ZazuAuthenticationError,
+    ZazuConfigurationError,
+    ZazuConnectionError,
+    ZazuForbiddenError,
+    ZazuNotFoundError,
+    ZazuRateLimitError,
+    ZazuServerError,
+    ZazuValidationError,
+)
+
+
+def test_missing_api_key_raises_configuration_error(monkeypatch):
+    monkeypatch.delenv("ZAZU_API_KEY", raising=False)
+    with pytest.raises(ZazuConfigurationError):
+        Zazu()
+
+
+def test_api_key_from_env(monkeypatch):
+    monkeypatch.setenv("ZAZU_API_KEY", "sk_env_test")
+    client = Zazu()
+    try:
+        assert client.api_key == "sk_env_test"
+    finally:
+        client.close()
+
+
+def test_base_url_default():
+    client = Zazu(api_key="sk_test")
+    try:
+        assert client.base_url == "https://zazu.ma"
+    finally:
+        client.close()
+
+
+def test_base_url_strips_trailing_slash():
+    client = Zazu(api_key="sk_test", base_url="https://staging.zazu.ma/")
+    try:
+        assert client.base_url == "https://staging.zazu.ma"
+    finally:
+        client.close()
+
+
+def _client_with_response(
+    status: int,
+    *,
+    body: bytes = b"",
+    content_type: str = "application/json",
+    headers: dict | None = None,
+) -> Zazu:
+    extra_headers = {"content-type": content_type, **(headers or {})}
+
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(status, headers=extra_headers, content=body)
+
+    return Zazu(
+        api_key="sk_test",
+        base_url="https://zazu.ma",
+        http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+
+
+@pytest.mark.parametrize(
+    ("status", "exc"),
+    [
+        (401, ZazuAuthenticationError),
+        (403, ZazuForbiddenError),
+        (404, ZazuNotFoundError),
+        (422, ZazuValidationError),
+        (500, ZazuServerError),
+        (503, ZazuServerError),
+    ],
+)
+def test_status_to_error_class(status, exc):
+    client = _client_with_response(
+        status, body=b'{"error":{"message":"nope"}}'
+    )
+    try:
+        with pytest.raises(exc) as info:
+            client.entity.get()
+        assert info.value.status == status
+        assert info.value.message == "nope"
+    finally:
+        client.close()
+
+
+def test_rate_limit_parses_retry_after():
+    client = _client_with_response(
+        429,
+        body=b'{"error":{"message":"slow down"}}',
+        headers={"retry-after": "42"},
+    )
+    try:
+        with pytest.raises(ZazuRateLimitError) as info:
+            client.entity.get()
+        assert info.value.retry_after == 42
+    finally:
+        client.close()
+
+
+def test_connection_failure_wraps_as_connection_error():
+    def handler(_request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("boom")
+
+    client = Zazu(
+        api_key="sk_test",
+        http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+    try:
+        with pytest.raises(ZazuConnectionError):
+            client.entity.get()
+    finally:
+        client.close()

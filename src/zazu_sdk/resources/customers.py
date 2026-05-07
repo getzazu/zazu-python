@@ -1,0 +1,32 @@
+"""Mirrors lib/zazu/resources/customers.rb."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from ..page import MAX_PER_PAGE, Page
+from ..response import ZazuResponse
+from .base import ResourceBase
+
+
+class Customers(ResourceBase):
+    def list(
+        self,
+        *,
+        q: str | None = None,
+        limit: int = MAX_PER_PAGE,
+        cursor: str | None = None,
+    ) -> Page[Any]:
+        return self.list_page("api/customers", {"q": q}, limit=limit, cursor=cursor)
+
+    def get(self, id: str) -> ZazuResponse:
+        return self.http_get(self.encode_path("api/customers", id))
+
+    def create(self, **attributes: Any) -> ZazuResponse:
+        return self.http_post("api/customers", body=attributes)
+
+    def update(self, id: str, **attributes: Any) -> ZazuResponse:
+        return self.http_patch(self.encode_path("api/customers", id), body=attributes)
+
+    def delete(self, id: str) -> ZazuResponse:
+        return self.http_delete(self.encode_path("api/customers", id))
