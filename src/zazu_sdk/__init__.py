@@ -16,11 +16,13 @@ from .errors import (
 )
 from .page import MAX_PER_PAGE, Page
 from .resources.accounts import Accounts
+from .resources.beneficiaries import Beneficiaries
 from .resources.checkout_sessions import CheckoutSessions
 from .resources.customers import Customers
 from .resources.entity import Entity
 from .resources.invoices import Invoices
 from .resources.payment_links import PaymentLinks
+from .resources.transfer_drafts import TransferDrafts
 from .resources.webhook_endpoints import WebhookEndpoints
 from .response import ZazuResponse
 
@@ -30,12 +32,14 @@ __all__ = [
     "MAX_PER_PAGE",
     "VERSION",
     "Accounts",
+    "Beneficiaries",
     "CheckoutSessions",
     "Customers",
     "Entity",
     "Invoices",
     "Page",
     "PaymentLinks",
+    "TransferDrafts",
     "WebhookEndpoints",
     "Zazu",
     "ZazuArgumentError",

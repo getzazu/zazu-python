@@ -18,6 +18,8 @@ FIXTURE_IDS: dict[str, str] = {
     "ZAZU_FIXTURE_DISABLED_WEBHOOK_ID": "fixture-disabled-webhook-id",
     "ZAZU_FIXTURE_DELETABLE_WEBHOOK_ID": "fixture-deletable-webhook-id",
     "ZAZU_FIXTURE_CHECKOUT_SESSION_ID": "fixture-checkout-session-id",
+    "ZAZU_FIXTURE_BENEFICIARY_ID": "fixture-beneficiary-id",
+    "ZAZU_FIXTURE_TRANSFER_DRAFT_ID": "fixture-transfer-draft-id",
 }
 
 STAGING_BASE_URL = "https://staging.zazu.ma"

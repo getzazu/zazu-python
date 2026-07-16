@@ -23,11 +23,13 @@ from .errors import (
 )
 from .page import MAX_PER_PAGE, Page
 from .resources.accounts import Accounts
+from .resources.beneficiaries import Beneficiaries
 from .resources.checkout_sessions import CheckoutSessions
 from .resources.customers import Customers
 from .resources.entity import Entity
 from .resources.invoices import Invoices
 from .resources.payment_links import PaymentLinks
+from .resources.transfer_drafts import TransferDrafts
 from .resources.webhook_endpoints import WebhookEndpoints
 from .response import ZazuResponse
 
@@ -63,11 +65,13 @@ class Zazu:
         self._http = http_client or httpx.Client(timeout=self.timeout)
 
         self.accounts = Accounts(self)
+        self.beneficiaries = Beneficiaries(self)
         self.checkout_sessions = CheckoutSessions(self)
         self.customers = Customers(self)
         self.entity = Entity(self)
         self.invoices = Invoices(self)
         self.payment_links = PaymentLinks(self)
+        self.transfer_drafts = TransferDrafts(self)
         self.webhook_endpoints = WebhookEndpoints(self)
 
     def __enter__(self) -> Zazu:
