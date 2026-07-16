@@ -14,7 +14,7 @@ Initial release.
 ### Added
 
 - Sync `Zazu` client built on `httpx`
-- Resource modules: `accounts`, `checkout_sessions`, `customers`, `entity`, `invoices`, `payment_links`, `webhook_endpoints`
+- Resource modules: `accounts`, `beneficiaries`, `checkout_sessions`, `customers`, `entity`, `invoices`, `payment_links`, `transfer_drafts`, `webhook_endpoints`
 - Cursor-based `Page` with `auto_paging_iter()`
 - Nine-class error hierarchy mirroring `zazu-ruby`
 - Cassette-replay test harness driven by the Ruby SDK's release tarball
