@@ -17,12 +17,25 @@ import os
 import sys
 import tarfile
 import tempfile
+import time
 import urllib.request
 from pathlib import Path
 
 REPO = "getzazu/zazu-ruby"
 ROOT = Path(__file__).resolve().parent.parent
 DEST = ROOT / "tests" / "fixtures" / "cassettes"
+
+
+def urlopen_with_retry(req: urllib.request.Request, attempts: int = 8):
+    """GitHub's API weathers occasional 503 storms - retry rather than fail CI."""
+    last_error: Exception | None = None
+    for _ in range(attempts):
+        try:
+            return urllib.request.urlopen(req)
+        except Exception as error:
+            last_error = error
+            time.sleep(10)
+    raise SystemExit(f"fetch failed after {attempts} attempts: {req.full_url}: {last_error}")
 
 
 def latest_tag() -> str:
@@ -34,7 +47,7 @@ def latest_tag() -> str:
         headers=headers,
     )
 
-    with urllib.request.urlopen(req) as resp:
+    with urlopen_with_retry(req) as resp:
         data = json.loads(resp.read())
     for rel in data:
         if not rel.get("draft"):
@@ -53,7 +66,7 @@ def main() -> int:
     req = urllib.request.Request(url, headers=headers)
 
     with (
-        urllib.request.urlopen(req) as resp,
+        urlopen_with_retry(req) as resp,
         tempfile.NamedTemporaryFile(suffix=".tar.gz", delete=False) as tmp,
     ):
         tmp.write(resp.read())
