@@ -12,8 +12,9 @@ Cassettes land under tests/fixtures/cassettes/.
 
 from __future__ import annotations
 
-import json
 import os
+import re
+import subprocess
 import sys
 import tarfile
 import tempfile
@@ -39,20 +40,23 @@ def urlopen_with_retry(req: urllib.request.Request, attempts: int = 8):
 
 
 def latest_tag() -> str:
-    headers = {"Accept": "application/vnd.github+json"}
-    if token := os.getenv("GH_TOKEN"):
-        headers["Authorization"] = f"Bearer {token}"
-    req = urllib.request.Request(
-        f"https://api.github.com/repos/{REPO}/releases?per_page=1",
-        headers=headers,
-    )
+    """Resolve the latest release tag over the git transport.
 
-    with urlopen_with_retry(req) as resp:
-        data = json.loads(resp.read())
-    for rel in data:
-        if not rel.get("draft"):
-            return str(rel["tag_name"])
-    raise SystemExit(f"No published releases found for {REPO}")
+    api.github.com's 503 storms have failed release runs; git ls-remote
+    rides separate infrastructure.
+    """
+    out = subprocess.run(
+        ["git", "ls-remote", "--tags", "--refs", f"https://github.com/{REPO}.git", "v*"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+    tags = [line.rsplit("/", 1)[-1] for line in out.splitlines() if line.strip()]
+    tags = [t for t in tags if re.match(r"^v\d", t)]
+    tags.sort(key=lambda t: [int(p) for p in t.lstrip("v").split(".")])
+    if not tags:
+        raise SystemExit(f"Could not resolve latest tag for {REPO}")
+    return tags[-1]
 
 
 def main() -> int:
